@@ -5,7 +5,7 @@ const timeStamps=require('mongoose-timestamp')
 
 
 const EpisodeSchema=new Schema({
-    course: {rype: Schema.Types.ObjectId,ref: 'Course'},
+    course: {type: Schema.Types.ObjectId,ref: 'Course'},
     title: {type: String,required:true},
     body: {type: String,required  :true},
     videoUrl: {type: String,required:true},
