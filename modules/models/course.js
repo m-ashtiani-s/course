@@ -8,7 +8,7 @@ const CourseSchema = new Schema({
 	body: { type: String, required: true },
 	price: { type: String, required: true },
 	image: { type: String, required: true },
-	episodes: [{ type: Schema.Types.ObjectId, ref: "Episode" }],
+	episodes: [{ type: Schema.Types.ObjectId, ref: "Episodes" }],
 });
 
 CourseSchema.plugin(timeStamps, {

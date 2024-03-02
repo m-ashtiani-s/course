@@ -7,10 +7,10 @@ const episode = require("../../../../models/episode");
 module.exports = new (class EpisodeController extends Controller {
 	get(req, res) {
 		try {
-			this.model.Episodes.find({})
+			this.model.Episodes.find({}).populate('course').exec()
 				.then((episodes) => {
 					return res.json({
-						data: new Transform().episodeCollection(episodes),
+						data: new Transform().episodeCollection(episodes,true),
 						success: true,
 					});
 				})
