@@ -4,13 +4,15 @@ const Transform = require("../../../../transform/v1/transform");
 
 module.exports = new (class CourseController extends Controller {
 	get(req, res) {
-		this.model.Courses.find({})
-			.populate("episodes")
-			.exec()
+		const paginationSetup = {
+			limit: req.query.limit || 10,
+			page: req.query.page || 1,
+		};
+		this.model.Courses.paginate({}, { limit: paginationSetup.limit, page: paginationSetup.page, populate: "episodes" })
 			.then((courses) => {
 				if (!!courses) {
 					return res.json({
-						data: new Transform().courseCollection(courses, req.query.withEpisodes == "true"),
+						data: new Transform().paginate(req,courses),
 						success: true,
 					});
 				}

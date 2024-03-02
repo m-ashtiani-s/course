@@ -1,4 +1,5 @@
 module.exports = class Tranform {
+	
 	courseCollection(items, withEpisodes = false) {
 		if (Array.isArray(items)) {
 			if (withEpisodes) {
@@ -20,7 +21,7 @@ module.exports = class Tranform {
 	}
 
 	episodeCollection(items, withCourse = false) {
-		console.log(items)
+		console.log(items);
 		if (Array.isArray(items)) {
 			if (withCourse) {
 				return items.map((item) => {
@@ -33,11 +34,21 @@ module.exports = class Tranform {
 			}
 		} else {
 			if (withCourse) {
-					return { id: items._id, title: items.title, body: items.body, course: this.courseCollection(items.course) };
+				return { id: items._id, title: items.title, body: items.body, course: this.courseCollection(items.course) };
 			} else {
-					return { id: items._id, title: items.title, body: items.body };
+				return { id: items._id, title: items.title, body: items.body };
 			}
 		}
+	}
+
+	paginate(req,items) {
+		return {
+			page: items.page,
+			totalElements: items.totalDocs,
+			totalPages: items.totalPages,
+			limit: items.limit,
+			elements: this.courseCollection(items.docs, req.query.withEpisodes == "true"),
+		};
 	}
 
 	episodeSingle(item) {
