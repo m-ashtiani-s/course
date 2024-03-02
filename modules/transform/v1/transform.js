@@ -20,14 +20,23 @@ module.exports = class Tranform {
 	}
 
 	episodeCollection(items, withCourse = false) {
-		if (withCourse) {
-			return items.map((item) => {
-				return { id: item._id, title: item.title, body: item.body, course: this.courseCollection(item.course) };
-			});
+		console.log(items)
+		if (Array.isArray(items)) {
+			if (withCourse) {
+				return items.map((item) => {
+					return { id: item._id, title: item.title, body: item.body, course: this.courseCollection(item.course) };
+				});
+			} else {
+				return items.map((item) => {
+					return { id: item._id, title: item.title, body: item.body };
+				});
+			}
 		} else {
-			return items.map((item) => {
-				return { id: item._id, title: item.title, body: item.body };
-			});
+			if (withCourse) {
+					return { id: items._id, title: items.title, body: items.body, course: this.courseCollection(items.course) };
+			} else {
+					return { id: items._id, title: items.title, body: items.body };
+			}
 		}
 	}
 

@@ -4,14 +4,22 @@ const Users = require("../../models/user");
 
 module.exports = class Controller {
 	constructor() {
-		this.model = { Courses,Episodes,Users};
+		this.model = { Courses, Episodes, Users };
 	}
 
-	//Show Errors For Validation Rules
-	showValidationErrors(req, res, callback) {
-		const errors = validationResult(req);
+	showValidationErrors(res,errors) {
 		if (!errors.isEmpty()) {
-			return res.status(422).json({ message: errors.array(), success: false });
+			const errorArray = [];
+			for (const error of errors.errors) {
+				errorArray.push({
+					field: error.path,
+					message: error.msg,
+				});
+			}
+			return res.status(500).json({
+				data: errorArray,
+				success: false,
+			});
 		}
 	}
 };

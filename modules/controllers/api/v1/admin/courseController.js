@@ -4,61 +4,47 @@ const Transform = require("../../../../transform/v1/transform");
 
 module.exports = new (class CourseController extends Controller {
 	get(req, res) {
-		try {
-			this.model.Courses.find({})
-				.populate("episodes")
-				.exec()
-				.then((courses) => {
-					if (!!courses) {
-						return res.json({
-							data: new Transform().courseCollection(courses, req.query.withEpisodes == "true"),
-							success: true,
-						});
-					}
-				})
-				.catch((err) => {
-					res.status(500).json({ data: [{ fields: "courses", message: err.message }], success: false });
-				});
-		} catch (err) {
-			res.status(500).json({ data: [{ fields: "courses", message: err.message }], success: false });
-		}
+		this.model.Courses.find({})
+			.populate("episodes")
+			.exec()
+			.then((courses) => {
+				if (!!courses) {
+					return res.json({
+						data: new Transform().courseCollection(courses, req.query.withEpisodes == "true"),
+						success: true,
+					});
+				}
+			})
+			.catch((err) => {
+				res.status(500).json({ data: [{ fields: "courses", message: err.message }], success: false });
+			});
 	}
 
 	getOne(req, res) {
-		try {
-			this.model.Courses.findById(req.params.id)
-				.populate("episodes")
-				.exec()
-				.then((course) => {
-					if (!!course) {
-						return res.json({
-							data: new Transform().courseCollection(course, req.query.withEpisodes == "true"),
-							success: true,
-						});
-					}
-				})
-				.catch((err) => {
-					res.status(500).json({ data: [{ fields: "course", message: err.message }], success: false });
-				});
-		} catch (err) {
-			res.status(500).json({ data: [{ fields: "course", message: err.message }], success: false });
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return this.showValidationErrors(res, errors);
 		}
+		this.model.Courses.findById(req.params.id)
+			.populate("episodes")
+			.exec()
+			.then((course) => {
+				if (!!course) {
+					return res.json({
+						data: new Transform().courseCollection(course, req.query.withEpisodes == "true"),
+						success: true,
+					});
+				}
+			})
+			.catch((err) => {
+				res.status(500).json({ data: [{ fields: "course", message: err.message }], success: false });
+			});
 	}
 
 	generate(req, res) {
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			const errorArray = [];
-			for (const error of errors.errors) {
-				errorArray.push({
-					field: error.path,
-					message: error.msg,
-				});
-			}
-			return res.status(500).json({
-				data: errorArray,
-				success: false,
-			});
+			return this.showValidationErrors(res, errors);
 		}
 
 		this.model.Courses.findOne({ title: req.body.title })
@@ -90,17 +76,7 @@ module.exports = new (class CourseController extends Controller {
 	edit(req, res) {
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			const errorArray = [];
-			for (const error of errors.errors) {
-				errorArray.push({
-					field: error.path,
-					message: error.msg,
-				});
-			}
-			return res.status(500).json({
-				data: errorArray,
-				success: false,
-			});
+			return this.showValidationErrors(res, errors);
 		}
 
 		const updatedData = {
@@ -113,7 +89,7 @@ module.exports = new (class CourseController extends Controller {
 		this.model.Courses.findByIdAndUpdate(req.params.id, updatedData)
 			.then((course) => {
 				if (!!course) {
-					res.json("دوره با موفقیت به روز شد");
+					return res.json({ data: [{ fields: "course", message: "دوره با موفقیت به روز شد" }], success: true });
 				} else {
 					res.status(400).json({ data: [{ fields: "course", message: "دوره ای با این شناسه وجود ندارد" }], success: false });
 				}
@@ -126,22 +102,14 @@ module.exports = new (class CourseController extends Controller {
 	delete(req, res) {
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			const errorArray = [];
-			for (const error of errors.errors) {
-				errorArray.push({
-					field: error.path,
-					message: error.msg,
-				});
-			}
-			return res.status(500).json({
-				data: errorArray,
-				success: false,
-			});
+			return this.showValidationErrors(res, errors);
 		}
 		this.model.Courses.findByIdAndDelete(req.params.id)
 			.then((course) => {
 				if (!!course) {
-					res.json("دوره با موفقیت حذف شد");
+					this.model.Episodes.deleteMany({ course: course._id }).then(() => {
+						return res.json({ data: [{ fields: "course", message: "دوره با موفقیت حذف شد" }], success: true });
+					});
 				} else {
 					res.status(400).json({ data: [{ fields: "course", message: "دوره ای با این شناسه وجود ندارد" }], success: false });
 				}
