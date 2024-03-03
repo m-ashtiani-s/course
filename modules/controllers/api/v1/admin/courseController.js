@@ -1,6 +1,7 @@
 const Controller = require("../../controller");
 const { validationResult } = require("express-validator");
 const Transform = require("../../../../transform/v1/transform");
+const mongoose = require('mongoose');
 
 module.exports = new (class CourseController extends Controller {
 	get(req, res) {
@@ -101,11 +102,14 @@ module.exports = new (class CourseController extends Controller {
 			});
 	}
 
-	delete(req, res) {
+	delete1(req, res) {
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
 			return this.showValidationErrors(res, errors);
 		}
+		// const session = await mongoose.startSession();
+		// let session = null;
+		console.log(this.model.Courses.findById(req.params.id))
 		this.model.Courses.findByIdAndDelete(req.params.id)
 			.then((course) => {
 				if (!!course) {
@@ -120,4 +124,44 @@ module.exports = new (class CourseController extends Controller {
 				res.status(500).json({ data: [{ fields: "course", message: err.message }], success: false });
 			});
 	}
+
+	delete(req, res) {
+		mongoose.startSession()
+			.then(session => {
+				session.startTransaction();
+	
+				const errors = validationResult(req);
+				if (!errors.isEmpty()) {
+					return this.showValidationErrors(res, errors);
+				}
+				this.model.Courses.findById(req.params.id).session(session)
+					.then(course => {
+						if (!course) {
+							session.abortTransaction();
+							session.endSession();
+							return res.status(400).json({ data: [{ fields: "course", message: "دوره ای با این شناسه وجود ندارد" }], success: false });
+						}
+	
+						return this.model.Episodes.deleteMany({ course: course._id }).session(session)
+							.then(() => {
+								return this.model.Courses.findByIdAndDelete(course._id).session(session)
+									.then(() => {
+										session.commitTransaction();
+										session.endSession();
+										return res.json({ data: [{ fields: "course", message: "دوره با موفقیت حذف شد" }], success: true });
+									});
+							});
+					})
+					.catch(err => {
+						session.abortTransaction();
+						session.endSession();
+						return res.status(500).json({ data: [{ fields: "course", message: err.message }], success: false });
+					});
+			})
+			.catch(err => {
+				return res.status(500).json({ data: [{ fields: "course", message: err.message }], success: false });
+			});
+	}
+	
+	
 })();
